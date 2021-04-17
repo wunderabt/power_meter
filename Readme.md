@@ -1,4 +1,4 @@
-# Paket Radio for Power Meter
+# Packet Radio for Power Meter
 
 idea: use 433MHz or 866MHz band to remotely read the power meter
 
