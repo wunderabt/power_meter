@@ -152,6 +152,20 @@ bool find_sequence(const byte *seq, size_t len) {
   }
 }
 
+// returns true when send was successful
+bool send_data(byte *data, int data_len) {
+  if (rf69_manager.sendtoWait(data, data_len, RFM69_DEST_ADDRESS)) {
+    // Now wait for a reply from the server
+    uint8_t len = sizeof(rf69_buf);
+    uint8_t from;   
+    if (!rf69_manager.recvfromAckTimeout(rf69_buf, &len, 2000, &from)) {
+      return false;
+    }
+  } else {
+    return false;
+  }
+  return true;
+}
 
 
 void loop() {
@@ -190,43 +204,9 @@ void loop() {
       uint8_t retries = 0;
       while (retries < rf69_retries) {
         retries++;
-        bool send_success = true;
-        if (rf69_manager.sendtoWait(readings[i].timestamp, num_timestamp_bytes, RFM69_DEST_ADDRESS)) {
-          // Now wait for a reply from the server
-          uint8_t len = sizeof(rf69_buf);
-          uint8_t from;   
-          if (!rf69_manager.recvfromAckTimeout(rf69_buf, &len, 2000, &from)) {
-            send_success = false;
-            continue;
-          }
-        } else {
-          send_success = false;
-          continue;
-        }
-        if (rf69_manager.sendtoWait(readings[i].power, num_power_bytes, RFM69_DEST_ADDRESS)) {
-          // Now wait for a reply from the server
-          uint8_t len = sizeof(rf69_buf);
-          uint8_t from;   
-          if (!rf69_manager.recvfromAckTimeout(rf69_buf, &len, 2000, &from)) {
-            send_success = false;
-            continue;
-          }
-        } else {
-          send_success = false;
-          continue;
-        }
-        if (rf69_manager.sendtoWait((uint8_t*)&readings[i].bat_volt, 2, RFM69_DEST_ADDRESS)) {
-          // Now wait for a reply from the server
-          uint8_t len = sizeof(rf69_buf);
-          uint8_t from;   
-          if (!rf69_manager.recvfromAckTimeout(rf69_buf, &len, 2000, &from)) {
-            send_success = false;
-            continue;
-          }
-        } else {
-          send_success = false;
-          continue;
-        }
+        bool send_success = send_data(readings[i].timestamp, num_timestamp_bytes) && \
+                            send_data(readings[i].power, num_power_bytes) && \
+                            send_data((uint8_t*)&readings[i].bat_volt, 2);
         if (send_success) {
           break;
         }
@@ -236,6 +216,5 @@ void loop() {
     cur_reading_idx = 0;
     rf69.sleep();
   }
-
   long_sleep(sample_interval);
 }

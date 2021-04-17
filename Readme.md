@@ -156,4 +156,4 @@ A total of 34 bytes - after 24h this amounts to 816 bytes which fits into the 2K
 
 ## Receiver
 
-The receiver is an Arduino with RFM69, Ethernet and SD-Card. It loops over events from Ethernet and the radio. When it receives new data via radio from the sender, which should be 720 bytes every 24h, it converts them to a CSV format and appends it to data on the SD-Card. The content of the SD-Card can be accessed through the http protocol over the ethernet shield.
+The receiver is an Arduino with RFM69, Ethernet and SD-Card. It loops over events from Ethernet and the radio. When it receives new data via radio from the sender, which should be 816 bytes every 24h, it appends it to data on the SD-Card. The content of the SD-Card can be accessed through the udp protocol over the ethernet shield.
