@@ -1,0 +1,6 @@
+[submodule "lib/RadioHead"]
+	path = lib/RadioHead
+	url = https://github.com/adafruit/RadioHead.git
+[submodule "lib/Adafruit_SleepyDog"]
+	path = lib/Adafruit_SleepyDog
+	url = https://github.com/adafruit/Adafruit_SleepyDog.git
