@@ -14,10 +14,10 @@ def fetch_data() -> bytes:
         sock.connect(('192.168.178.177', 8888))
         sock.send(b"hello") # any message works
         sock.settimeout(10) # wait max for N seconds
-        blocksize = 1024
+        blocksize = 4096
         while(True):
             try:
-                data = sock.recv(blocksize).replace(b'\r\n', b'\n').replace(bytes.fromhex("05"), b'')
+                data = sock.recv(blocksize)
                 yield data
                 if data.endswith(b"EOT"):
                     break
