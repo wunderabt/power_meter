@@ -25,7 +25,7 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 IPAddress ip(192, 168, 178, 177);
-unsigned int localPort = 8888;      // local port to listen on
+const unsigned int localPort = 8888;      // local port to listen on
 EthernetUDP Udp;
 
 const uint8_t sdcard_cs_pin   =  4;
@@ -34,11 +34,12 @@ const uint8_t rfm69_int_pin   =  3;
 const uint8_t rfm69_rst_pin   =  2;
 const uint8_t ethernet_cs_pin = 10;
 
-#define RF69_FREQ         999.9 // change this
+#define RF69_FREQ         999.9
 #define RF69_ADDRESS        1
+#define SD_FILENAME "readings.hex"
 
 uint8_t rf69_key[] = { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-                       0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}; // change this
+                       0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01};
 
 // Singleton instance of the radio driver
 RH_RF69 rf69(rfm69_cs_pin, rfm69_int_pin);
@@ -101,7 +102,6 @@ void setup() {
   // The encryption key has to be the same as the one in the server
   rf69.setEncryptionKey(rf69_key);
   //Serial.print("RFM69 radio @");  Serial.print((int)RF69_FREQ);  Serial.println(" MHz");
-  
 
   // Ethernet Setup
   pinMode(ethernet_cs_pin, OUTPUT);
@@ -126,10 +126,11 @@ void loop() {
   if (packetSize) {
     spi_select(sdcard_cs_pin);
     if (SD.begin(sdcard_cs_pin)) {
-      File dataFile = SD.open("readings.hex", FILE_READ);
+      File dataFile = SD.open(SD_FILENAME, FILE_READ);
+      msg_buf[RH_RF69_MAX_MESSAGE_LEN-1] = '\0';
       if (dataFile) {
         while (dataFile.available()) {
-          dataFile.read(&msg_buf, sizeof(msg_buf));
+          dataFile.read(&msg_buf, RH_RF69_MAX_MESSAGE_LEN-1);
           spi_select(ethernet_cs_pin);
           Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
           Udp.write((char *)msg_buf);
@@ -156,7 +157,7 @@ void loop() {
       Serial.println(len);
       spi_select(sdcard_cs_pin);
       if (SD.begin(sdcard_cs_pin)) {
-          File dataFile = SD.open("readings.hex", FILE_WRITE);
+          File dataFile = SD.open(SD_FILENAME, FILE_WRITE);
           if (dataFile) {
             for (uint8_t i = 0; i < len; i++) {
               dataFile.print(msg_buf[i], HEX); dataFile.print(" ");

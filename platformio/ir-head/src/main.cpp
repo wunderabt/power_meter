@@ -7,14 +7,12 @@
 #define RFM69_DEST_ADDRESS   1
 // change addresses for each client board, any number :)
 #define RFM69_ADDRESS        2
-#define RFM69_FREQ         999.9 // change this
+#define RFM69_FREQ         999.9
 
-#if defined (__AVR_ATmega32U4__) // Feather 32u4 w/Radio
   #define RFM69_CS      8
   #define RFM69_INT     7
   #define RFM69_RST     4
   #define LED           13
-#endif
 
 #define VBATPIN A9
 #define IRPOWERPIN A5
@@ -28,7 +26,7 @@ const int num_memory_entries = 24; // entries for one day, one entry each hour
 const uint16_t sample_interval = 3600; // 3600s = 1h
 
 const uint8_t rf69_key[] = { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-                             0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}; // change this
+                             0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01};
 const uint8_t rf69_retries = 20;
 const int     rf69_retry_pause = 2000; // 2s
 
@@ -88,7 +86,7 @@ void setup() {
   rf69.setTxPower(20, true);  // range from 14-20 for power, 2nd arg must be true for 69HCW
 
   rf69.setEncryptionKey(rf69_key);
-  
+
   Serial.print("RFM69 radio @");  Serial.print((int)RFM69_FREQ);  Serial.println(" MHz");
 
   // send a message that we restarted
@@ -96,7 +94,7 @@ void setup() {
   if (rf69_manager.sendtoWait(start_msg, sizeof(start_msg), RFM69_DEST_ADDRESS)) {
     // Now wait for a reply from the server
     uint8_t len = sizeof(rf69_buf);
-    uint8_t from;   
+    uint8_t from;
     if (rf69_manager.recvfromAckTimeout(rf69_buf, &len, 2000, &from)) {
       Serial.print("Got reply from #"); Serial.print(from);
       Serial.print(" [RSSI :");
@@ -157,7 +155,7 @@ bool send_data(byte *data, int data_len) {
   if (rf69_manager.sendtoWait(data, data_len, RFM69_DEST_ADDRESS)) {
     // Now wait for a reply from the server
     uint8_t len = sizeof(rf69_buf);
-    uint8_t from;   
+    uint8_t from;
     if (!rf69_manager.recvfromAckTimeout(rf69_buf, &len, 2000, &from)) {
       return false;
     }
