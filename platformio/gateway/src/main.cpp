@@ -60,10 +60,6 @@ void spi_select(uint8_t pin) {
     digitalWrite(sdcard_cs_pin,   HIGH);
   }
   digitalWrite(pin, LOW); // LOW = active
-  // is there a bug in the ethernet shield? Without the delay it sometimes hangs
-  if (pin == ethernet_cs_pin) {
-    delay(3);
-  }
 }
 
 void setup() {
@@ -116,8 +112,15 @@ void setup() {
     }
   }
   Udp.begin(localPort);
+  Serial.println("ready");
 }
 
+void send_udp_message(char* msg) {
+  spi_select(ethernet_cs_pin);
+  Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+  Udp.write((char *)msg);
+  Udp.endPacket();
+} 
 
 void loop() {
   // listen for incoming clients
@@ -131,20 +134,15 @@ void loop() {
       if (dataFile) {
         while (dataFile.available()) {
           dataFile.read(&msg_buf, RH_RF69_MAX_MESSAGE_LEN-1);
-          spi_select(ethernet_cs_pin);
-          Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-          Udp.write((char *)msg_buf);
-          Udp.endPacket();
+          send_udp_message((char *)msg_buf);
           spi_select(sdcard_cs_pin);
         }
         dataFile.close();
-        // send a UDP package with a "END" sequence
-        Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-        char eot[] = "\n\nEOT";
-        Udp.write(eot);
-        Udp.endPacket();
       }
     }
+    // send a UDP package with a "END" sequence
+    char eot[] = "\n\nEOT";
+    send_udp_message(eot);
   }
 
   spi_select(rfm69_cs_pin);

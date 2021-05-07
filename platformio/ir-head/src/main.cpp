@@ -3,30 +3,31 @@
 #include <RHReliableDatagram.h>
 #include <Adafruit_SleepyDog.h>
 
+// #define DEBUG 1 // comment in for USB debug
 // CONSTANTS
 #define RFM69_DEST_ADDRESS   1
 // change addresses for each client board, any number :)
 #define RFM69_ADDRESS        2
 #define RFM69_FREQ         999.9
 
-  #define RFM69_CS      8
-  #define RFM69_INT     7
-  #define RFM69_RST     4
-  #define LED           13
+#define RFM69_CS      8
+#define RFM69_INT     7
+#define RFM69_RST     4
+#define LED           13
 
-#define VBATPIN A9
+#define VBATPIN    A9
 #define IRPOWERPIN A5
 const byte SML_START_SEQUENCE[] = {0x1B, 0x1B, 0x1B, 0x1B, 0x01, 0x01, 0x01, 0x01};
 const byte SML_OBIS_TIMESTAMP[] = {0x07, 0x01, 0x00, 0x62, 0x0A, 0xFF, 0xFF};
 const byte SML_OBIS_POWER[]     = {0x07, 0x01, 0x00, 0x01, 0x08, 0x00, 0xFF};
 
-const int num_timestamp_bytes = 12;
-const int num_power_bytes = 20;
-const int num_memory_entries = 24; // entries for one day, one entry each hour
+const int num_timestamp_bytes  =   12;
+const int num_power_bytes      =   20;
+const int num_memory_entries   =   24; // entries for one day, one entry each hour
 const uint16_t sample_interval = 3600; // 3600s = 1h
 
-const uint8_t rf69_key[] = { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-                             0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01};
+uint8_t rf69_key[] = { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+                       0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01};
 const uint8_t rf69_retries = 20;
 const int     rf69_retry_pause = 2000; // 2s
 
@@ -51,9 +52,11 @@ int cur_reading_idx = 0;
 void setup() {
   // USB debug port
   Serial.begin(9600);
+#ifdef DEBUG  
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
+#endif
   // IR Header from power meter
   pinMode(IRPOWERPIN, OUTPUT);
   digitalWrite(IRPOWERPIN, LOW);
@@ -87,10 +90,11 @@ void setup() {
 
   rf69.setEncryptionKey(rf69_key);
 
+#ifdef DEBUG  
   Serial.print("RFM69 radio @");  Serial.print((int)RFM69_FREQ);  Serial.println(" MHz");
 
   // send a message that we restarted
-  char start_msg[] = "restart";
+  uint8_t start_msg[] = "restart";
   if (rf69_manager.sendtoWait(start_msg, sizeof(start_msg), RFM69_DEST_ADDRESS)) {
     // Now wait for a reply from the server
     uint8_t len = sizeof(rf69_buf);
@@ -106,7 +110,7 @@ void setup() {
   } else {
     Serial.print("send restart message failed");
   }
-
+#endif
   // RFM96 starts powered off
   rf69.sleep();
 
@@ -182,8 +186,9 @@ void loop() {
   } else { Serial.println("no SML start sequence found"); }
   digitalWrite(IRPOWERPIN, LOW); // power down the IR head
 
+#ifdef DEBUG
   // debug print
-  /* Serial.print("TIMESTAMP: ");
+  Serial.print("TIMESTAMP: ");
   for (int i = 0; i < num_timestamp_bytes; i++) {
     Serial.print(readings[cur_reading_idx-1].timestamp[i], HEX); Serial.print(" ");
   }
@@ -192,7 +197,8 @@ void loop() {
   for (int i = 0; i < num_power_bytes; i++) {
     Serial.print(readings[cur_reading_idx-1].power[i], HEX); Serial.print(" ");
   }
-  Serial.println(); */
+  Serial.println();
+#endif
 
 
   if (cur_reading_idx == num_memory_entries) {
@@ -214,5 +220,9 @@ void loop() {
     cur_reading_idx = 0;
     rf69.sleep();
   }
+#ifdef DEBUG
+  delay(2000);
+#else
   long_sleep(sample_interval);
+#endif
 }
